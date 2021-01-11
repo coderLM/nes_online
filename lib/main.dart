@@ -61,7 +61,6 @@ class _MyHomePageState extends State<MyHomePage> {
     print('list8[6]:::'+list8[6].toString());
     print('list8[7]:::'+list8[7].toString());
     setState(() {});
-    Canvas canvas;
   }
 
   @override
