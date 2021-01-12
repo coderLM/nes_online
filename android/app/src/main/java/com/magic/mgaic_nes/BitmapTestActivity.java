@@ -2,6 +2,7 @@ package com.magic.mgaic_nes;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.ImageView;
@@ -13,7 +14,9 @@ import com.alibaba.fastjson.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.ToIntFunction;
 
@@ -35,22 +38,21 @@ public class BitmapTestActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+//        file:///Users/sm-li/jsnes/example/nes-embed.html
         String json = getData();
         Map<Object, Object> map = (Map<Object, Object>) JSONObject.parse(json);
-        System.out.println("map len:::" + map.size());
-        System.out.println("type of value:::"+map.get("0"));
-        int[] arr = new int[map.size()];
-        Long[] array = (Long[]) map.values().toArray(new Long[0]);
-        System.out.println("int value:::"+array[0]);
-        for (int i = 0; i < array.length; i++) {
-            arr[i] = (int) (array[i]&(0xffffffff));
+        int len = map.size();
+        int[] arr = new int[len];
+        for (int i = 0; i < len; i++) {
+            ///模拟器返回的像素颜色为 AGBR，需要调换成 ARGB
+            int value = ((Long) map.get(i + "")).intValue();
+            int R = (value & 0x000000ff) << 16;
+            int B = (value & 0x00ff0000) >> 16;
+            arr[i] = (value & 0xff00ff00) | R | B;
         }
-        System.out.println("arr[0]"+arr[0]);
-        System.out.println("arr[0]"+arr[1]);
-        System.out.println("arr[0]"+arr[2]);
-        System.out.println("arr[0]"+arr[3]);
-        System.out.println("0xff000000:::"+(0xff000000));
         imageView.setImageBitmap(Bitmap.createBitmap(arr, 256, 240, Bitmap.Config.ARGB_8888));
+//        imageView.setScaleX(4.0f);
+//        imageView.setScaleY(4.0f);
     }
 
     private String getData() {
