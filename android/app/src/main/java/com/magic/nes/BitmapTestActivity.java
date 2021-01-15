@@ -1,8 +1,7 @@
-package com.magic.mgaic_nes;
+package com.magic.nes;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.ImageView;
@@ -14,11 +13,7 @@ import com.alibaba.fastjson.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.ToIntFunction;
 
 /**
  * Created by LiMeng on 2021/1/11.

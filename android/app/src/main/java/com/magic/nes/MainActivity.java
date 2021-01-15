@@ -1,7 +1,6 @@
-package com.magic.mgaic_nes;
+package com.magic.nes;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
