@@ -10,8 +10,6 @@ import com.eclipsesource.v8.V8;
 import com.eclipsesource.v8.V8Array;
 import com.eclipsesource.v8.V8Object;
 
-import java.util.Stack;
-
 /**
  * Created by LiMeng on 2021/1/15.
  */
@@ -54,16 +52,11 @@ class JSExecutor {
                 public Object invoke(V8Object v8Object, V8Array args) {
                     V8Object exports = null;
                     String filePath = args.get(0).toString();
-//                    String absolutePath =  FileUtil.getFilePathFromAsset(mContext.mFlutterPluginBinding.getApplicationContext(), filePath, searchDirArray);
+//                    String absolutePath =  FileUtils.getFilePathFromAsset(context, filePath);
 //                    if (!TextUtils.isEmpty(absolutePath)) {
-//                        exports = JSModule.require(filePath, absolutePath, MXJSExecutor.runtime, isFromAsset);
+//                        exports = JSModule.require(filePath, absolutePath, runtime, false);
 //                        if (exports == null) {
-//                            jsExecutor.executeScript("throw 'not found'", new MXJSExecutor.ExecuteScriptCallback() {
-//                                @Override
-//                                public void onComplete(Object value) {
-//
-//                                }
-//                            });
+//                            Log.e(TAG,"require js file fail,file name: %s"+filePath);
 //                            return null;
 //                        }
 //                    } else {
@@ -72,12 +65,12 @@ class JSExecutor {
                     return exports;
                 }
             };
-            runtime.registerJavaMethod(require, "print");
+            runtime.registerJavaMethod(require, "require");
         }
     }
 
     public void execute(String path) {
-        String jsCode = FileUtil.getScriptFromAssets(context, path);
+        String jsCode = FileUtils.getScriptFromAssets(context, path);
         runtime.executeVoidScript(jsCode);
     }
     public  void dispose(){

@@ -13,7 +13,7 @@ import static android.content.ContentValues.TAG;
  * Created by LiMeng on 2021/1/18.
  */
 
-class FileUtil {
+class FileUtils {
     public static String getScriptFromAssets(Context context, String fileName) {
         InputStream input = null;
         ByteArrayOutputStream output = null;
@@ -28,6 +28,7 @@ class FileUtil {
             output.flush();
             return output.toString();
         } catch (IOException e) {
+            Log.e("nes","getScriptFromAssets error"+e.getMessage());
         } finally {
             try {
                 if (output != null) {
@@ -41,4 +42,9 @@ class FileUtil {
         }
         return null;
     }
+    public static  String getFilePathFromAsset(Context context,String filePath){
+        //todo: mod this
+        return "asstes/jsnes/src/"+filePath;
+    }
+
 }
