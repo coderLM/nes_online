@@ -1,7 +1,9 @@
 package com.magic.nes;
 
 class GameController {
-    public void start(){}
+    static  final String filePath="data/fly.nes";
+    public void start(){
+    }
     public void stop(){}
     public void pause(){}
     public void restart(){}

@@ -20,13 +20,13 @@ public class MainActivity extends FlutterActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        Timer timer=new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                runOnUiThread(() -> openTestPage());
-            }
-        },1000);
+//        Timer timer=new Timer();
+//        timer.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//                runOnUiThread(() -> openTestPage());
+//            }
+//        },1000);
        
     }
     private  void openTestPage(){

@@ -19,11 +19,12 @@ var nes = new NES({
 	onFrame: function (framebuffer_24) {
 		for (var i = 0; i < FRAMEBUFFER_SIZE; i++) {
 			framebuffer_u32[i] = 0xFF000000 | framebuffer_24[i];
+		}	
+		if (printCount % 50 == 0) {
+			print("onFrame:" + JSON.stringify(framebuffer_24));
 		}
 		printCount++;
-		if (printCount == 300) {
-		}
-		// console.log("printCount:::"+printCount);
+		print("onFrame:" + printCount);
 	},
 	onAudioSample: function (l, r) {
 		audio_samples_L[audio_write_cursor] = l;
@@ -38,10 +39,13 @@ function audio_remain() {
 
 function nes_start(data) {
 	nes_init();
-	nes.loadROM(rom_data);
+
+	print("data js len:" + data.length);
+	print("data js :" + data.substring(0, 20) + "...");
+	nes.loadROM(data);
 }
 
-function nes_init(canvas_id) {
+function nes_init() {
 	var buffer = new ArrayBuffer(SCREEN_WIDTH * SCREEN_HEIGHT);
 	framebuffer_u8 = new Uint8ClampedArray(buffer);
 	framebuffer_u32 = new Uint32Array(buffer);
@@ -53,17 +57,22 @@ function get_frame() {
 //called by java
 function get_audio(dataLen) {
 	// Attempt to avoid buffer underruns.
-	if (audio_remain() < AUDIO_BUFFERING) nes.frame();
-	var dst_l = new Float32Array(dataLen);
-	var dst_r = new Float32Array(dataLen);
-	for (var i = 0; i < dataLen; i++) {
-		var src_idx = (audio_read_cursor + i) & SAMPLE_MASK;
-		dst_l[i] = audio_samples_L[src_idx];
-		dst_r[i] = audio_samples_R[src_idx];
+	if (audio_remain() < AUDIO_BUFFERING) {
+		nes.frame();
 	}
 
-	audio_read_cursor = (audio_read_cursor + len) & SAMPLE_MASK;
-	return [dst_l, dst_r];
+	var dst = new Float32Array(dataLen * 2);
+	for (var i = 0; i < dataLen; i++) {
+		var src_idx = (audio_read_cursor + i) & SAMPLE_MASK;
+		dst[i] = audio_samples_L[src_idx];
+		dst[dataLen + i] = audio_samples_R[src_idx];
+	}
+
+	audio_read_cursor = (audio_read_cursor + dataLen) & SAMPLE_MASK;
+	if (printCount % 2 == 0) {
+		print("get_audio = "+ dst[0]+" "+dst[1]+" "+dst[2]+" "+dst[3]);
+	}
+	return dst;
 }
 //called by java
 function onKeyDown(keyCode) {
@@ -97,7 +106,4 @@ function keyboard(callback, keyCode) {
 			callback(player, jsnes.Controller.BUTTON_START); break;
 		default: break;
 	}
-}
-function main(){
-    print("js running");
 }

@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:video_player/video_player.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {
   runApp(MyApp());
@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'nes online',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -39,30 +39,10 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
   }
 
-  Uint8List list8;
-
-  void readJson() async {
-    String str = await rootBundle.loadString("assets/data/nes_frame.json");
-    Map<String,dynamic> data = jsonDecode(str);
-    List<dynamic> list64 = data.values.toList();
-
-    Uint32List list32 = Uint32List.fromList(list64.cast<int>());
-
-    list8 = list32.buffer.asUint8List();
-    print('readJosn len:::'+list64.length.toString());
-    print('readJosn len:::'+list8.length.toString());
-    print('list32[0]:::'+list32[0].toString());
-    print('list8[0]:::'+list8[0].toString());
-    print('list8[1]:::'+list8[1].toString());
-    print('list8[2]:::'+list8[2].toString());
-    print('list8[3]:::'+list8[3].toString());
-    print('list8[4]:::'+list8[4].toString());
-    print('list8[5]:::'+list8[5].toString());
-    print('list8[6]:::'+list8[6].toString());
-    print('list8[7]:::'+list8[7].toString());
-    setState(() {});
-  }
-
+  int webFinishedStates = 0;
+  WebViewController webViewController;
+  var windowWidth = MediaQueryData.fromWindow(window).size.width;
+  var windowHeight = MediaQueryData.fromWindow(window).size.height;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,21 +55,54 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             FlatButton(
                 color: Colors.black,
-                onPressed: readJson,
+                onPressed: start,
                 child: Text(
                   "getJson",
                   style: TextStyle(color: Colors.white),
                 )),
-            list8 == null
-                ? Container()
-                : Image.memory(
-                    list8,
-                    // width: 256,
-                    // height: 240,
-                  ),
+            Container(
+              width: windowWidth,
+              height: windowWidth,
+              child:    Offstage(
+              //坑： webview loaddata加载过程中，黑屏，所以加载后再显示
+              offstage: webFinishedStates == 0,
+              child: WebView(
+                onWebViewCreated: (controller) {
+                  webViewController = controller;
+                  loadHtml();
+                },
+                javascriptMode: JavascriptMode.unrestricted,
+                onPageFinished: (String url) {
+                  webFinishedStates = 1;
+                  setState(() {});
+                },
+                javascriptChannels: <JavascriptChannel>[
+                  _toasterJavascriptChannel(context),
+                ].toSet(),
+              ),
+            ) ,)
+
           ],
         ),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
+  Future<String> getFileData(String path) async {
+    return await rootBundle.loadString(path);
+  }
+
+  void loadHtml() async {
+    print("loadHtml");
+    String data = await getFileData("assets/nes-embed.html");
+    await webViewController.loadData(data);
+    print("loadHtml finished");
+  }
+  JavascriptChannel _toasterJavascriptChannel(BuildContext context) {
+    return JavascriptChannel(
+        name: 'print',
+        onMessageReceived: (JavascriptMessage message) {
+          print("通信=${message.message}");
+        });
+  }
+  void start() {}
 }
