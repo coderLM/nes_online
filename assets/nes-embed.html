@@ -111,6 +111,7 @@
 		}
 
 		function nes_boot(rom_data) {
+			stringToByte(rom_data);
 			nes.loadROM(rom_data);
 			window.requestAnimationFrame(onAnimationFrame);
 		}
@@ -147,7 +148,40 @@
 
 		document.addEventListener('keydown', (event) => { keyboard(nes.buttonDown, event) });
 		document.addEventListener('keyup', (event) => { keyboard(nes.buttonUp, event) });
-//open -n /Applications/Google\ Chrome.app/ --args --disable-web-security  --user-data-dir=/Users/sm-li/MyChromeDevUserData
+		//open -n /Applications/Google\ Chrome.app/ --args --disable-web-security  --user-data-dir=/Users/sm-li/MyChromeDevUserData
+		function stringToByte(str) {
+			var len, c;
+			len = str.length;
+			var bytes = [];
+			for (var i = 0; i < len; i++) {
+				c = str.charCodeAt(i);
+				if (c >= 0x010000 && c <= 0x10FFFF) {
+					bytes.push(((c >> 18) & 0x07) | 0xF0);
+					bytes.push(((c >> 12) & 0x3F) | 0x80);
+					bytes.push(((c >> 6) & 0x3F) | 0x80);
+					bytes.push((c & 0x3F) | 0x80);
+				} else if (c >= 0x000800 && c <= 0x00FFFF) {
+					bytes.push(((c >> 12) & 0x0F) | 0xE0);
+					bytes.push(((c >> 6) & 0x3F) | 0x80);
+					bytes.push((c & 0x3F) | 0x80);
+				} else if (c >= 0x000080 && c <= 0x0007FF) {
+					bytes.push(((c >> 6) & 0x1F) | 0xC0);
+					bytes.push((c & 0x3F) | 0x80);
+				} else {
+					bytes.push(c & 0xFF);
+				}
+			}
+			// return new Int8Array(bytes);
+			var printData = "";
+			for (let i = 0; i < 100; i++) {
+				printData += ","+bytes[i];
+			}
+			for (let i = 3000; i < 3100; i++) {
+				printData += ","+bytes[i];
+			}
+			console.log("printData:::"+printData);
+			return bytes;
+		}
 	</script>
 	<script>window.onload = function () {
 			document.querySelector('button').addEventListener('click', function () {

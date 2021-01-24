@@ -13,7 +13,9 @@ import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.eclipsesource.v8.NodeJS;
 import com.eclipsesource.v8.V8Array;
 
 import java.io.BufferedReader;
@@ -51,21 +53,58 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
                 initAudioTack();
                 startGame();
                 getAudioFrame();
+                testParseChar();
                 break;
         }
+    }
+
+    private void testParseChar() {
+        String chrome = "786983262100000000001202391581622391591912391581542391591682391581421322391581421664239158142032442324423216239159187442321623915918723915816964239158141236423915816963239158141632239158142632239158169152391581623223915814173223915913817623915814001530452391581682391581620239158169123915814122642391581690239158141226423915816982391581333023915818522647411831239159134302391591442391591822391591682391591603239159144239159163239158165312391591333223915917662391591333323915917622391581653223915815316";
+        String v8_2 = "786983262100000000001202391901622391911912391901542391911682391901421322391901421664239190142032442324423216239191187442321623919118723919016964239190141236423919016963239190141632239190142632239190169152391901623223919014173223919113817623919014001530452391901682391901620239190169123919014122642391901690239190141226423919016982391901333023919018522647411831239191134302391911442391911822391911682391911603239191144239191163239190165312391911333223919117662391911333323919117622391901653223919015316";
+        int len = chrome.length();
+        StringBuffer sb0 = new StringBuffer();
+        StringBuffer sb1 = new StringBuffer();
+        for (int i = 0; i < len; i++) {
+            if (chrome.charAt(i) != v8_2.charAt(i)) {
+                sb0.append(chrome.charAt(i));
+                sb1.append(v8_2.charAt(i));
+            }
+        }
+        System.out.println("c:"+sb0.toString());
+        System.out.println("v:"+sb1.toString());
+        char[] arr = new char[]{158, 159, 190, 191};
+        System.out.println("arr:"+new String(arr));
     }
 
     JSExecutor jsExecutor;
 
     private void startGame() {
         jsExecutor = JSExecutor.getInstance(this);
-        String string;
-        byte[] bytes = FileUtils.getFileDataByReader(
-                this,
+        byte[] result = FileUtils.getFileDataByReader(
+                getApplicationContext(),
                 "data/fly.nes");
-        jsExecutor.callMethodWithString("nes_start", new String(bytes,US_ASCII));
+//        String printData="";
+//        for(int i=0;i<100;i++) {
+//            printData+=(bytes[i]>=0?bytes[i]:bytes[i]+128);
+//        }
+//        System.out.println("java printData:"+printData);
+        System.out.println("result:::" + result.length);
+//        for(int i=0;i<result.length;i++){
+//            if(result[i]==)
+//        }
+        printBytes(result);
+        jsExecutor.callMethodWithBytes("nes_start", result);
     }
-
+    private void  printBytes(byte[] bytes){
+        String printData = "";
+        for (int i = 0; i < 100; i++) {
+            printData += ","+bytes[i];
+        }
+        for (int i = 3000; i < 3100; i++) {
+            printData += ","+bytes[i];
+        }
+        System.out.println("java printData:::"+printData);
+    }
 
     private AudioTrack track = null;// 录音文件播放对象
 
@@ -90,12 +129,15 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
     }
 
     private void getAudioFrame() {
+        //数据源对比
+        //第八帧数据对比 toJSON 导出数据
+        //
         stoped = false;
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while (!stoped) {
-                    SystemClock.sleep(30);
+                    SystemClock.sleep(1000);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -107,6 +149,8 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
                             for (int i = 0; i < v8Array.length(); i++) {
                                 floatArray[i] = (float) v8Array.get(i);
                             }
+                            System.out.println("vaArray  = " + JSON.toJSONString(floatArray));
+
                             int result0 = track.write(floatArray, 0, 512, AudioTrack.WRITE_BLOCKING);
 //                            int result1 = track.write(floatArray, bufferSize / 4, bufferSize / 4, AudioTrack.WRITE_BLOCKING);
 //                            int result1 = track.write(dataArray, bufferSize, bufferSize);
@@ -130,7 +174,7 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
         }).start();
 
         new Thread(() -> {
-            SystemClock.sleep(1000 * 20);
+            SystemClock.sleep(1000 * 10);
             stoped = true;
         }).start();
     }

@@ -4,11 +4,20 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.FileDescriptor;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.lang.reflect.Array;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
 
 import static android.content.ContentValues.TAG;
 
@@ -31,7 +40,7 @@ class FileUtils {
             output.flush();
             return new String(output.toByteArray(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            Log.e("nes","getScriptFromAssets error"+e.getMessage());
+            Log.e("nes", "getScriptFromAssets error" + e.getMessage());
         } finally {
             try {
                 if (output != null) {
@@ -45,6 +54,7 @@ class FileUtils {
         }
         return null;
     }
+
     public static byte[] getFileDataByReader(Context context, String fileName) {
         InputStream input = null;
         ByteArrayOutputStream output = null;
@@ -59,7 +69,7 @@ class FileUtils {
             output.flush();
             return output.toByteArray();
         } catch (IOException e) {
-            Log.e("nes","getScriptFromAssets error"+e.getMessage());
+            Log.e("nes", "getScriptFromAssets error" + e.getMessage());
         } finally {
             try {
                 if (output != null) {
@@ -73,9 +83,26 @@ class FileUtils {
         }
         return null;
     }
-    public static  String getFilePathFromAsset(Context context,String filePath,ArrayList<String> searchDirArray){
-       return getFilePathFromAssetExt(context,filePath,searchDirArray);
+
+    public static String getFileDataByReader2(Context context, String fileName) {
+        try {
+            InputStreamReader inputReader = new InputStreamReader(context.getAssets().open(fileName));
+            BufferedReader bufReader = new BufferedReader(inputReader);
+            String line = "";
+            String result = "";
+            while ((line = bufReader.readLine()) != null)
+                result += line;
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
+
+    public static String getFilePathFromAsset(Context context, String filePath, ArrayList<String> searchDirArray) {
+        return getFilePathFromAssetExt(context, filePath, searchDirArray);
+    }
+
     public static String getFilePathFromAssetExt(Context context, String filePath, ArrayList<String> searchDirArray) {
         String prefix = "./";
         if (filePath.startsWith(prefix)) {
