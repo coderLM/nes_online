@@ -101,7 +101,11 @@ public class JSExecutor {
         buffer.put(bytes);
         V8TypedArray v8TypedArray =  new V8TypedArray(runtime, buffer, V8Value.BYTE, 0, bytes.length);
         parameters.push(v8TypedArray);
-        Object result = function.call(runtime, parameters);
+        function.call(runtime, parameters);
+
+        parameters.close();
+        buffer.close();
+        v8TypedArray.close();
     }
     public void callMethodWithString(String method, String data){
         V8Function function = (V8Function) runtime.getObject(method);

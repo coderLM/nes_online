@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.View;
@@ -12,6 +13,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -20,9 +22,15 @@ import com.eclipsesource.v8.V8Array;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.US_ASCII;
+import static java.nio.charset.StandardCharsets.UTF_16;
+import static java.nio.charset.StandardCharsets.UTF_16BE;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Created by LiMeng on 2021/1/11.
@@ -53,7 +61,7 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
                 initAudioTack();
                 startGame();
                 getAudioFrame();
-                testParseChar();
+//                testParseChar();
                 break;
         }
     }
@@ -83,27 +91,10 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
         byte[] result = FileUtils.getFileDataByReader(
                 getApplicationContext(),
                 "data/fly.nes");
-//        String printData="";
-//        for(int i=0;i<100;i++) {
-//            printData+=(bytes[i]>=0?bytes[i]:bytes[i]+128);
-//        }
-//        System.out.println("java printData:"+printData);
         System.out.println("result:::" + result.length);
-//        for(int i=0;i<result.length;i++){
-//            if(result[i]==)
-//        }
-        printBytes(result);
+
         jsExecutor.callMethodWithBytes("nes_start", result);
-    }
-    private void  printBytes(byte[] bytes){
-        String printData = "";
-        for (int i = 0; i < 100; i++) {
-            printData += ","+bytes[i];
-        }
-        for (int i = 3000; i < 3100; i++) {
-            printData += ","+bytes[i];
-        }
-        System.out.println("java printData:::"+printData);
+//        jsExecutor.callMethodWithString("nes_start", new String(result, US_ASCII));
     }
 
     private AudioTrack track = null;// 录音文件播放对象
@@ -137,7 +128,7 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
             @Override
             public void run() {
                 while (!stoped) {
-                    SystemClock.sleep(1000);
+                    SystemClock.sleep(500);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -149,6 +140,7 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
                             for (int i = 0; i < v8Array.length(); i++) {
                                 floatArray[i] = (float) v8Array.get(i);
                             }
+                            v8Array.close();
                             System.out.println("vaArray  = " + JSON.toJSONString(floatArray));
 
                             int result0 = track.write(floatArray, 0, 512, AudioTrack.WRITE_BLOCKING);
@@ -174,7 +166,7 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
         }).start();
 
         new Thread(() -> {
-            SystemClock.sleep(1000 * 10);
+            SystemClock.sleep(1000 * 20);
             stoped = true;
         }).start();
     }
