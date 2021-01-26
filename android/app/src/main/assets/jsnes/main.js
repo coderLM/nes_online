@@ -20,8 +20,19 @@ var nes = new NES({
 		for (var i = 0; i < FRAMEBUFFER_SIZE; i++) {
 			framebuffer_u32[i] = 0xFF000000 | framebuffer_24[i];
 		}
-		if (printCount % 10 == 0) {
-			print("onFrame:" +printCount+"  "+ JSON.stringify(framebuffer_24));
+		// if (printCount % 10 == 0) {
+			
+		// }
+		
+		if(printCount==38){
+			print("onFrame:" + printCount + "  " + JSON.stringify(framebuffer_24));
+			var string="";
+			for(var i=0;i<framebuffer_24.length;i++){
+				if(framebuffer_24[i]!=0){
+					string+=","+framebuffer_24[i];
+				}
+			}
+			print("onFrame not zero:" +string);
 		}
 		printCount++;
 		// print("onFrame:" + printCount);
@@ -37,20 +48,16 @@ function audio_remain() {
 	return (audio_write_cursor - audio_read_cursor) & SAMPLE_MASK;
 }
 
-function nes_start(data) {
-	// var string =byteToString(data);
-	// stringToByte(data);
-	// var string = decodeUtf8(data);
+function nes_start(rom_data) {
 
-	// for(var i=0;i<data.length;i++){
-	// 	data[i]=data[i]&0xff;
-	// }
-
-	var array = new Uint8Array(data);
-	// array.from(data, x => x);
-	printBytes(array);
+	var array = new Uint8Array(rom_data);
+	printData(array);
+	var string = "";
+	for (var i = 0; i < array.length; i++) {
+		string += String.fromCharCode(array[i]);
+	}
 	nes_init();
-	nes.loadROM(array);
+	nes.loadROM(string);
 }
 
 function nes_init() {
@@ -113,19 +120,13 @@ function keyboard(callback, keyCode) {
 	}
 }
 
-function printBytes(bytes) {
+function printData(data){
 	var printData = "";
-	for (let i = 0; i < 40; i++) {
-		// printData += ","+(bytes[i]&0xff).toString(16);
-		printData += "," + bytes[i].toString(16);
+	for (let i = 500; i < 600; i++) {
+		printData += "," + data[i];
 	}
-	// for (let i = 3000; i < 3100; i++) {
-	// 	printData += ","+bytes[i].toString(2);
-	// }
+	for (let i = 3500; i < 3600; i++) {
+		printData += "," + data[i];
+	}
 	print("printData:::" + printData);
-	print("printData index=17:::" + bytes[17].toString(2));
-	print("printData index=17:::" + (bytes[17] & 0xff).toString(2));
-
-
-	// print("printData -94&0xff to2:::"+((-94)&0xff).toString(2));
 }

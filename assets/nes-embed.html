@@ -7,7 +7,8 @@
 	<title>Embedding Example</title>
 
 	<script type="text/javascript" src="https://unpkg.com/jsnes/dist/jsnes.min.js"></script>
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jschardet/1.4.1/jschardet.min.js"></script>
+	<script type="text/javascript"
+		src="https://cdnjs.cloudflare.com/ajax/libs/jschardet/1.4.1/jschardet.min.js"></script>
 	<script>
 		var SCREEN_WIDTH = 256;
 		var SCREEN_HEIGHT = 240;
@@ -28,6 +29,8 @@
 				for (var i = 0; i < FRAMEBUFFER_SIZE; i++) {
 					framebuffer_u32[i] = 0xFF000000 | framebuffer_24[i];
 				}
+				console.log("onFrame:" + printCount + "  " + JSON.stringify(framebuffer_24));
+				printCount++;
 			},
 			onAudioSample: function (l, r) {
 				audio_samples_L[audio_write_cursor] = l;
@@ -62,7 +65,8 @@
 				dst_r[i] = audio_samples_R[src_idx];
 			}
 			//len == 512
-			// console.log("audio_callback len:"+len);
+			console.log("audio_callback :"+JSON.stringify(dst_l));
+			console.log("audio_callback :"+JSON.stringify(dst_r));
 			audio_read_cursor = (audio_read_cursor + len) & SAMPLE_MASK;
 		}
 
@@ -112,13 +116,20 @@
 		}
 
 		function nes_boot(rom_data) {
-			stringToByte(rom_data);
-			for(var i=0;i<30;i++){
-				console.log("charcode at "+i+":::"+rom_data.charCodeAt(i));
+			var array = new Uint8Array(rom_data.length);
+			for (var i = 0; i < rom_data.length; i++) {
+				array[i] = rom_data.charCodeAt(i) & 0xff;
 			}
-			console.log("rom_data.length:::"+rom_data.length);
-			console.log("rom_data at 40976:::"+rom_data.charCodeAt(40976));
-			nes.loadROM(rom_data);
+			printData(array);
+			var string = "";
+			for (var i = 0; i < array.length; i++) {
+				string += String.fromCharCode(array[i]);
+			}
+
+
+			// nes.loadROM(rom_data);
+			nes.loadROM(string);
+
 			window.requestAnimationFrame(onAnimationFrame);
 		}
 
@@ -148,12 +159,7 @@
 			req.send();
 		}
 		function dealLoadResult(responseText) {
-			//length == 40976
-			console.log("get succeed len= ", responseText.length, "type of ", typeof responseText);
-			// jschardet.enableDebug();
-			// var dresult = jschardet.detect(responseText, { minimumThreshold: 0 });
-			// console.log("dresult:::" + JSON.stringify(dresult));
-			// Aborted, so ignore error
+			console.log("load url succeed" + responseText.length);
 			nes_boot(responseText);
 		}
 
@@ -171,16 +177,13 @@
 					bytes.push(((c >> 12) & 0x3F) | 0x80);
 					bytes.push(((c >> 6) & 0x3F) | 0x80);
 					bytes.push((c & 0x3F) | 0x80);
-					console.log("charCodeAt len is 4");
 				} else if (c >= 0x000800 && c <= 0x00FFFF) {
 					bytes.push(((c >> 12) & 0x0F) | 0xE0);
 					bytes.push(((c >> 6) & 0x3F) | 0x80);
 					bytes.push((c & 0x3F) | 0x80);
-					console.log("charCodeAt len is 3");
 				} else if (c >= 0x000080 && c <= 0x0007FF) {
 					bytes.push(((c >> 6) & 0x1F) | 0xC0);
 					bytes.push((c & 0x3F) | 0x80);
-					console.log("charCodeAt len is 2");
 				} else {
 					bytes.push(c & 0xFF);
 				}
@@ -195,6 +198,16 @@
 			}
 			console.log("printData:::" + printData);
 			return bytes;
+		}
+		function printData(data) {
+			var printData = "";
+			for (let i = 500; i < 600; i++) {
+				printData += "," + data[i];
+			}
+			for (let i = 3500; i < 3600; i++) {
+				printData += "," + data[i];
+			}
+			console.log("printData:::" + printData);
 		}
 	</script>
 	<script>window.onload = function () {

@@ -61,9 +61,15 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
                 initAudioTack();
                 startGame();
                 getAudioFrame();
-//                testParseChar();
+//                testNodeJS();
                 break;
         }
+    }
+
+    private void testNodeJS() {
+//        NodeJS nodeJS = NodeJS.createNodeJS();
+//        nodeJS.getRuntime();
+
     }
 
     private void testParseChar() {
@@ -78,10 +84,10 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
                 sb1.append(v8_2.charAt(i));
             }
         }
-        System.out.println("c:"+sb0.toString());
-        System.out.println("v:"+sb1.toString());
+        System.out.println("c:" + sb0.toString());
+        System.out.println("v:" + sb1.toString());
         char[] arr = new char[]{158, 159, 190, 191};
-        System.out.println("arr:"+new String(arr));
+        System.out.println("arr:" + new String(arr));
     }
 
     JSExecutor jsExecutor;
@@ -128,7 +134,7 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
             @Override
             public void run() {
                 while (!stoped) {
-                    SystemClock.sleep(500);
+                    SystemClock.sleep(50);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -166,7 +172,7 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
         }).start();
 
         new Thread(() -> {
-            SystemClock.sleep(1000 * 20);
+            SystemClock.sleep(1000 * 50);
             stoped = true;
         }).start();
     }
