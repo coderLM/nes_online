@@ -7,35 +7,18 @@ var FRAMEBUFFER_SIZE = SCREEN_WIDTH * SCREEN_HEIGHT;
 
 var canvas_ctx, image;
 var framebuffer_u8, framebuffer_u32;
-
 var AUDIO_BUFFERING = 512;
 var SAMPLE_COUNT = 4 * 1024;
 var SAMPLE_MASK = SAMPLE_COUNT - 1;
 var audio_samples_L = new Float32Array(SAMPLE_COUNT);
 var audio_samples_R = new Float32Array(SAMPLE_COUNT);
 var audio_write_cursor = 0, audio_read_cursor = 0;
-var printCount = 0;
 var nes = new NES({
 	onFrame: function (framebuffer_24) {
 		for (var i = 0; i < FRAMEBUFFER_SIZE; i++) {
 			framebuffer_u32[i] = 0xFF000000 | framebuffer_24[i];
 		}
-		// if (printCount % 10 == 0) {
-			
-		// }
-		
-		if(printCount==38){
-			print("onFrame:" + printCount + "  " + JSON.stringify(framebuffer_24));
-			var string="";
-			for(var i=0;i<framebuffer_24.length;i++){
-				if(framebuffer_24[i]!=0){
-					string+=","+framebuffer_24[i];
-				}
-			}
-			print("onFrame not zero:" +string);
-		}
-		printCount++;
-		// print("onFrame:" + printCount);
+		push();
 	},
 	onAudioSample: function (l, r) {
 		audio_samples_L[audio_write_cursor] = l;
@@ -65,32 +48,31 @@ function nes_init() {
 	framebuffer_u8 = new Uint8ClampedArray(buffer);
 	framebuffer_u32 = new Uint32Array(buffer);
 }
-//called by java
-function get_frame() {
-	return framebuffer_u8;
+function frame() {
+	nes.frame();
 }
-//called by java
-function get_audio(dataLen) {
-	// Attempt to avoid buffer underruns.
-	if (audio_remain() < AUDIO_BUFFERING) {
-		nes.frame();
-	}
+function push() {
+	///push frame
+	java_receive_frame(framebuffer_u32);
 
-	var dst = new Float32Array(dataLen * 2);
-	for (var i = 0; i < dataLen; i++) {
+	///push audio
+	var len = audio_remain();
+	if (len < 1) return;
+	var pushAudio = new Float32Array(len*2);
+	var index = 0;
+	for (var i = 0; i < len; i++) {
 		var src_idx = (audio_read_cursor + i) & SAMPLE_MASK;
-		dst[i] = audio_samples_L[src_idx];
-		dst[dataLen + i] = audio_samples_R[src_idx];
+		pushAudio[index] = audio_samples_L[src_idx];
+		pushAudio[index + 1] = audio_samples_R[src_idx];
+		index += 2;
 	}
-
-	audio_read_cursor = (audio_read_cursor + dataLen) & SAMPLE_MASK;
-	return dst;
+	audio_read_cursor = (audio_read_cursor + len) & SAMPLE_MASK;
+	java_receive_audio(pushAudio);
 }
-//called by java
+
 function onKeyDown(keyCode) {
 	keyboard(nes.buttonDown, keyCode);
 }
-//called by java
 function onKeyUp(keyCode) {
 	keyboard(nes.buttonUp, keyCode);
 }
@@ -120,7 +102,7 @@ function keyboard(callback, keyCode) {
 	}
 }
 
-function printData(data){
+function printData(data) {
 	var printData = "";
 	for (let i = 500; i < 600; i++) {
 		printData += "," + data[i];

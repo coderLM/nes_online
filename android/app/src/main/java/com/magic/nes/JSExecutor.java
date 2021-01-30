@@ -28,7 +28,8 @@ public class JSExecutor {
     public V8 runtime;
     private static JSExecutor instance;
     public static final ArrayList<String> searchDirArray = new ArrayList<>();
-    private static String mainPath="jsnes/main.js";
+    private static String mainPath = "jsnes/main.js";
+
     static {
         searchDirArray.add("jsnes");
         searchDirArray.add("jsnes/src");
@@ -64,10 +65,10 @@ public class JSExecutor {
             };
             runtime.registerJavaMethod(print, "print");
             JavaCallback require = (v8Object, args) -> {
-                try{
+                try {
                     V8Object exports = null;
                     String filePath = args.get(0).toString();
-                    String absolutePath = FileUtils.getFilePathFromAsset(context, filePath,searchDirArray );
+                    String absolutePath = FileUtils.getFilePathFromAsset(context, filePath, searchDirArray);
                     if (!TextUtils.isEmpty(absolutePath)) {
                         exports = JSModule.require(filePath, absolutePath, runtime, false);
                         if (exports == null) {
@@ -78,15 +79,21 @@ public class JSExecutor {
                         Log.e(TAG, "require js file fail,file name: %s" + filePath);
                     }
                     return exports;
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
                 return null;
             };
             runtime.registerJavaMethod(require, "require");
+
+
             JSModule.initGlobalModuleCache(runtime);
             execute(mainPath);
         }
+    }
+
+    public void setVoidCallback(String methodName, JavaVoidCallback callback) {
+        runtime.registerJavaMethod(callback, methodName);
     }
 
     private void execute(String path) {
@@ -94,12 +101,17 @@ public class JSExecutor {
         runtime.executeVoidScript(jsCode);
 
     }
-    public void callMethodWithBytes(String method, byte[] bytes){
+
+    public void callMethod(String method) {
+        runtime.executeFunction(method, null);
+    }
+
+    public void callMethodWithBytes(String method, byte[] bytes) {
         V8Function function = (V8Function) runtime.getObject(method);
         V8Array parameters = new V8Array(runtime);
         V8ArrayBuffer buffer = new V8ArrayBuffer(runtime, bytes.length);
         buffer.put(bytes);
-        V8TypedArray v8TypedArray =  new V8TypedArray(runtime, buffer, V8Value.BYTE, 0, bytes.length);
+        V8TypedArray v8TypedArray = new V8TypedArray(runtime, buffer, V8Value.BYTE, 0, bytes.length);
         parameters.push(v8TypedArray);
         function.call(runtime, parameters);
 
@@ -107,17 +119,18 @@ public class JSExecutor {
         buffer.close();
         v8TypedArray.close();
     }
-    public void callMethodWithString(String method, String data){
+
+    public void callMethodWithString(String method, String data) {
         V8Function function = (V8Function) runtime.getObject(method);
         V8Array parameters = new V8Array(runtime);
         parameters.push(data);
-        System.out.println("data java len:"+data.length());
-        System.out.println("data java content:"+data.substring(0,20)+"...");
+        System.out.println("data java len:" + data.length());
+        System.out.println("data java content:" + data.substring(0, 20) + "...");
         Object result = function.call(runtime, parameters);
     }
 
-    public V8Array callArrayMethodWithInteger(String method,int len){
-        V8Array parameters =  new V8Array(runtime);
+    public V8Array callArrayMethodWithInteger(String method, int len) {
+        V8Array parameters = new V8Array(runtime);
         parameters.push(len);
         return runtime.executeArrayFunction(method, parameters);
     }
@@ -127,3 +140,4 @@ public class JSExecutor {
         runtime.close();
     }
 }
+

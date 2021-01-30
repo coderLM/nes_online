@@ -5,32 +5,27 @@ import android.graphics.Bitmap;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.os.Build;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.SystemClock;
+import android.view.Surface;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.eclipsesource.v8.NodeJS;
+import com.eclipsesource.v8.JavaVoidCallback;
 import com.eclipsesource.v8.V8Array;
+import com.eclipsesource.v8.V8Object;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
-import static java.nio.charset.StandardCharsets.US_ASCII;
-import static java.nio.charset.StandardCharsets.UTF_16;
-import static java.nio.charset.StandardCharsets.UTF_16BE;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Created by LiMeng on 2021/1/11.
@@ -39,12 +34,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class BitmapTestActivity extends Activity implements View.OnClickListener {
     ImageView imageView;
     Button button;
-
+    private GLSurfaceView mGLView;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_bitmaptest);
-        initView();
+//        setContentView(R.layout.activity_bitmaptest);
+//        initView();
+        setContentView(mGLView);
     }
 
     private void initView() {
@@ -61,51 +57,39 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
                 initAudioTack();
                 startGame();
                 getAudioFrame();
-//                testNodeJS();
                 break;
         }
-    }
-
-    private void testNodeJS() {
-//        NodeJS nodeJS = NodeJS.createNodeJS();
-//        nodeJS.getRuntime();
-
-    }
-
-    private void testParseChar() {
-        String chrome = "786983262100000000001202391581622391591912391581542391591682391581421322391581421664239158142032442324423216239159187442321623915918723915816964239158141236423915816963239158141632239158142632239158169152391581623223915814173223915913817623915814001530452391581682391581620239158169123915814122642391581690239158141226423915816982391581333023915818522647411831239159134302391591442391591822391591682391591603239159144239159163239158165312391591333223915917662391591333323915917622391581653223915815316";
-        String v8_2 = "786983262100000000001202391901622391911912391901542391911682391901421322391901421664239190142032442324423216239191187442321623919118723919016964239190141236423919016963239190141632239190142632239190169152391901623223919014173223919113817623919014001530452391901682391901620239190169123919014122642391901690239190141226423919016982391901333023919018522647411831239191134302391911442391911822391911682391911603239191144239191163239190165312391911333223919117662391911333323919117622391901653223919015316";
-        int len = chrome.length();
-        StringBuffer sb0 = new StringBuffer();
-        StringBuffer sb1 = new StringBuffer();
-        for (int i = 0; i < len; i++) {
-            if (chrome.charAt(i) != v8_2.charAt(i)) {
-                sb0.append(chrome.charAt(i));
-                sb1.append(v8_2.charAt(i));
-            }
-        }
-        System.out.println("c:" + sb0.toString());
-        System.out.println("v:" + sb1.toString());
-        char[] arr = new char[]{158, 159, 190, 191};
-        System.out.println("arr:" + new String(arr));
     }
 
     JSExecutor jsExecutor;
 
     private void startGame() {
         jsExecutor = JSExecutor.getInstance(this);
+        jsExecutor.setVoidCallback("java_receive_frame", new JavaVoidCallback() {
+            @Override
+            public void invoke(V8Object v8Object, V8Array v8Array) {
+            }
+        });
+        jsExecutor.setVoidCallback("java_receive_audio", new JavaVoidCallback() {
+            @Override
+            public void invoke(V8Object v8Object, V8Array v8Array) {
+                V8Array array = (V8Array) v8Array.get(0);
+                float[] audioData = new float[array.length()];
+                for (int i = 0; i < array.length(); i++) {
+                    audioData[i] = (float) array.get(i);
+                }
+                play(audioData);
+            }
+        });
         byte[] result = FileUtils.getFileDataByReader(
                 getApplicationContext(),
                 "data/fly.nes");
-        System.out.println("result:::" + result.length);
-
         jsExecutor.callMethodWithBytes("nes_start", result);
-//        jsExecutor.callMethodWithString("nes_start", new String(result, US_ASCII));
     }
 
     private AudioTrack track = null;// 录音文件播放对象
 
-    private int frequence = 8000;// 采样率 8000
+    private int frequence = 44100;// 采样率 8000
 
     private int channelOutConfig = AudioFormat.CHANNEL_OUT_STEREO;// 定义采样通道
 
@@ -118,63 +102,51 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
         // 获取缓冲 大小
         bufferSize = AudioTrack.getMinBufferSize(frequence, channelOutConfig,
                 audioEncoding);
+        System.out.println("bufferSize  = " + bufferSize);
         // 实例AudioTrack
         track = new AudioTrack(AudioManager.STREAM_MUSIC, frequence,
                 channelOutConfig, audioEncoding, bufferSize,
-                AudioTrack.MODE_STATIC);
-        track.setVolume(AudioTrack.getMaxVolume());
+                AudioTrack.MODE_STREAM);
     }
 
     private void getAudioFrame() {
-        //数据源对比
-        //第八帧数据对比 toJSON 导出数据
-        //
         stoped = false;
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while (!stoped) {
-                    SystemClock.sleep(50);
+                    SystemClock.sleep(16);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            //len：单声道的数据长度为 bufferSize 字节==>bufferSize/4 float32
-                            V8Array v8Array = jsExecutor.callArrayMethodWithInteger("get_audio", 512);
-//                            System.out.println("vaArray len = "+v8Array.length());
-                            //返回数据格式为 [左声道... 右声道...]
-                            float[] floatArray = new float[1024];
-                            for (int i = 0; i < v8Array.length(); i++) {
-                                floatArray[i] = (float) v8Array.get(i);
-                            }
-                            v8Array.close();
-                            System.out.println("vaArray  = " + JSON.toJSONString(floatArray));
-
-                            int result0 = track.write(floatArray, 0, 512, AudioTrack.WRITE_BLOCKING);
-//                            int result1 = track.write(floatArray, bufferSize / 4, bufferSize / 4, AudioTrack.WRITE_BLOCKING);
-//                            int result1 = track.write(dataArray, bufferSize, bufferSize);
-//                            if (!writeSuccess(result0)||!writeSuccess(result1)) {
-                            if (!writeSuccess(result0)) {
-                                //出异常情况
-                                release();
-                                System.out.println("write error result0=" + result0);
-//                                System.out.println("write error result1=" + result1);
-                                return;
-                            }
-                            if (track.getState() != AudioTrack.STATE_INITIALIZED) {
-                                System.out.println("AudioTrack state = " + track.getState());
-                                return;
-                            }
-                            track.play();
+                            jsExecutor.callMethod("frame");
                         }
                     });
                 }
             }
         }).start();
+        new Handler().postDelayed(() -> stoped = true, 1000 * 20);
+    }
 
-        new Thread(() -> {
-            SystemClock.sleep(1000 * 50);
-            stoped = true;
-        }).start();
+    boolean firstPlay = true;
+
+    private void play(float[] floatArray) {
+        int result0 = track.write(floatArray, 0, floatArray.length, AudioTrack.WRITE_BLOCKING);
+        if (!writeSuccess(result0)) {
+            //出异常情况
+            release();
+            System.out.println("write error result0=" + result0);
+            return;
+        }
+        if (track.getState() != AudioTrack.STATE_INITIALIZED) {
+            System.out.println("AudioTrack state = " + track.getState());
+            return;
+        }
+        System.out.println("track.play:" + floatArray.length + " floatArray[100]" + floatArray[100]);
+        if (firstPlay) {
+            track.play();
+            firstPlay=false;
+        }
     }
 
     private boolean writeSuccess(int result) {
@@ -220,4 +192,11 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
 //        imageView.setScaleX(4.0f);
 //        imageView.setScaleY(4.0f);
     }
+    /**
+     * 向surfaceview中绘制bitmap
+     *
+     * EGL是介于诸如OpenGL 或OpenVG的Khronos渲染API与底层本地平台窗口系统的接口。
+     * 它被用于处理图形管理、表面/缓冲捆绑、渲染同步及支援使用其他Khronos API进行的高效、加速、混合模式2D和3D渲染。
+     */
 }
+

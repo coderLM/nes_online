@@ -24,18 +24,25 @@
 		var audio_samples_R = new Float32Array(SAMPLE_COUNT);
 		var audio_write_cursor = 0, audio_read_cursor = 0;
 		var printCount = 0;
+		var audioCount=0;
 		var nes = new jsnes.NES({
 			onFrame: function (framebuffer_24) {
 				for (var i = 0; i < FRAMEBUFFER_SIZE; i++) {
 					framebuffer_u32[i] = 0xFF000000 | framebuffer_24[i];
 				}
-				console.log("onFrame:" + printCount + "  " + JSON.stringify(framebuffer_24));
 				printCount++;
 			},
 			onAudioSample: function (l, r) {
 				audio_samples_L[audio_write_cursor] = l;
 				audio_samples_R[audio_write_cursor] = r;
 				audio_write_cursor = (audio_write_cursor + 1) & SAMPLE_MASK;
+				if(printCount==10){
+					audioCount++;
+				}
+				if(printCount==11){
+					console.log("audioCount: "+audioCount);
+					console.log("type of l: "+;);
+				}
 			},
 		});
 
@@ -65,8 +72,8 @@
 				dst_r[i] = audio_samples_R[src_idx];
 			}
 			//len == 512
-			console.log("audio_callback :"+JSON.stringify(dst_l));
-			console.log("audio_callback :"+JSON.stringify(dst_r));
+			// console.log("audio_callback :"+JSON.stringify(dst_l));
+			// console.log("audio_callback :"+JSON.stringify(dst_r));
 			audio_read_cursor = (audio_read_cursor + len) & SAMPLE_MASK;
 		}
 
@@ -196,7 +203,7 @@
 			for (let i = 3000; i < 3100; i++) {
 				printData += "," + bytes[i];
 			}
-			console.log("printData:::" + printData);
+			// console.log("printData:::" + printData);
 			return bytes;
 		}
 		function printData(data) {
@@ -207,7 +214,7 @@
 			for (let i = 3500; i < 3600; i++) {
 				printData += "," + data[i];
 			}
-			console.log("printData:::" + printData);
+			// console.log("printData:::" + printData);
 		}
 	</script>
 	<script>window.onload = function () {
