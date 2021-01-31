@@ -13,10 +13,12 @@ var SAMPLE_MASK = SAMPLE_COUNT - 1;
 var audio_samples_L = new Float32Array(SAMPLE_COUNT);
 var audio_samples_R = new Float32Array(SAMPLE_COUNT);
 var audio_write_cursor = 0, audio_read_cursor = 0;
+var framebuffer_int = new Int32Array(FRAMEBUFFER_SIZE);
 var nes = new NES({
 	onFrame: function (framebuffer_24) {
 		for (var i = 0; i < FRAMEBUFFER_SIZE; i++) {
-			framebuffer_u32[i] = 0xFF000000 | framebuffer_24[i];
+			// framebuffer_u32[i] = 0xFF000000 | framebuffer_24[i];
+			framebuffer_int[i] = framebuffer_24[i];
 		}
 		push();
 	},
@@ -53,12 +55,12 @@ function frame() {
 }
 function push() {
 	///push frame
-	java_receive_frame(framebuffer_u32);
+	java_receive_frame(framebuffer_int);
 
 	///push audio
 	var len = audio_remain();
 	if (len < 1) return;
-	var pushAudio = new Float32Array(len*2);
+	var pushAudio = new Float32Array(len * 2);
 	var index = 0;
 	for (var i = 0; i < len; i++) {
 		var src_idx = (audio_read_cursor + i) & SAMPLE_MASK;

@@ -5,11 +5,14 @@ import android.graphics.Bitmap;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.opengl.GLUtils;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.view.Surface;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -20,9 +23,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.eclipsesource.v8.JavaVoidCallback;
 import com.eclipsesource.v8.V8Array;
 import com.eclipsesource.v8.V8Object;
+import com.eclipsesource.v8.V8TypedArray;
+import com.eclipsesource.v8.debug.mirror.Frame;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,18 +42,22 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
     ImageView imageView;
     Button button;
     private GLSurfaceView mGLView;
+    SurfaceView surfaceView;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_bitmaptest);
-//        initView();
-        setContentView(mGLView);
+        setContentView(R.layout.activity_bitmaptest);
+        initView();
+//        setContentView(mGLView);
+
     }
 
     private void initView() {
         imageView = findViewById(R.id.action_image);
         button = findViewById(R.id.test_button);
         button.setOnClickListener(this);
+        surfaceView = findViewById(R.id.surface_view);
     }
 
 
@@ -54,11 +65,24 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.test_button:
-                initAudioTack();
-                startGame();
-                getAudioFrame();
+                testGame();
+                intEGLUtil();
                 break;
         }
+    }
+
+    FrameUtil frameUtil;
+
+    private void intEGLUtil() {
+        frameUtil = new FrameUtil();
+        frameUtil.initEGL(surfaceView.getHolder());
+        frameUtil.initShader();
+    }
+
+    private void testGame() {
+        initAudioTack();
+        startGame();
+        getAudioFrame();
     }
 
     JSExecutor jsExecutor;
@@ -68,6 +92,8 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
         jsExecutor.setVoidCallback("java_receive_frame", new JavaVoidCallback() {
             @Override
             public void invoke(V8Object v8Object, V8Array v8Array) {
+                V8TypedArray array = (V8TypedArray) v8Array.get(0);
+                renderFrame(array.getIntegers(0, array.length()));
             }
         });
         jsExecutor.setVoidCallback("java_receive_audio", new JavaVoidCallback() {
@@ -125,7 +151,7 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
                 }
             }
         }).start();
-        new Handler().postDelayed(() -> stoped = true, 1000 * 20);
+        new Handler().postDelayed(() -> stoped = true, 1000 * 30);
     }
 
     boolean firstPlay = true;
@@ -142,10 +168,9 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
             System.out.println("AudioTrack state = " + track.getState());
             return;
         }
-        System.out.println("track.play:" + floatArray.length + " floatArray[100]" + floatArray[100]);
         if (firstPlay) {
             track.play();
-            firstPlay=false;
+            firstPlay = false;
         }
     }
 
@@ -175,22 +200,30 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
         return "";
     }
 
-    private void testRenderArray() {
-        //        file:///Users/sm-li/jsnes/example/nes-embed.html
-        String json = getData();
-        Map<Object, Object> map = (Map<Object, Object>) JSONObject.parse(json);
-        int len = map.size();
-        int[] arr = new int[len];
-        for (int i = 0; i < len; i++) {
+    int renderCount;
+    Bitmap testBitmap;
+    private void renderFrame(int[] arr) {
+        for (int i = 0; i < arr.length; i++) {
             ///模拟器返回的像素颜色为 AGBR，需要调换成 ARGB
-            int value = ((Long) map.get(i + "")).intValue();
-            int R = (value & 0x000000ff) << 16;
-            int B = (value & 0x00ff0000) >> 16;
-            arr[i] = (value & 0xff00ff00) | R | B;
+            int value = arr[i];
+            int R = (value & 0x0000ff) << 16;
+            int B = (value & 0xff0000) >> 16;
+            arr[i] = 0xff000000 | R | (value & 0x00ff00) | B;
         }
-        imageView.setImageBitmap(Bitmap.createBitmap(arr, 256, 240, Bitmap.Config.ARGB_8888));
-//        imageView.setScaleX(4.0f);
-//        imageView.setScaleY(4.0f);
+        Bitmap bitmap = Bitmap.createBitmap(arr, 256, 240, Bitmap.Config.ARGB_8888);
+        imageView.setImageBitmap(bitmap);
+        renderCount++;
+        if (renderCount == 10) {
+            testBitmap=bitmap;
+            new Handler(getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    frameUtil.render(testBitmap, 256, 240);
+//                    GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, testBitmap, 0);
+                }
+            }, 1000);
+
+        }
     }
     /**
      * 向surfaceview中绘制bitmap

@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:video_player/video_player.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {
@@ -43,6 +44,7 @@ class _MyHomePageState extends State<MyHomePage> {
   WebViewController webViewController;
   var windowWidth = MediaQueryData.fromWindow(window).size.width;
   var windowHeight = MediaQueryData.fromWindow(window).size.height;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,30 +65,31 @@ class _MyHomePageState extends State<MyHomePage> {
             Container(
               width: windowWidth,
               height: windowWidth,
-              child:    Offstage(
-              //坑： webview loaddata加载过程中，黑屏，所以加载后再显示
-              offstage: webFinishedStates == 0,
-              child: WebView(
-                onWebViewCreated: (controller) {
-                  webViewController = controller;
-                  loadHtml();
-                },
-                javascriptMode: JavascriptMode.unrestricted,
-                onPageFinished: (String url) {
-                  webFinishedStates = 1;
-                  setState(() {});
-                },
-                javascriptChannels: <JavascriptChannel>[
-                  _toasterJavascriptChannel(context),
-                ].toSet(),
+              child: Offstage(
+                //坑： webview loaddata加载过程中，黑屏，所以加载后再显示
+                offstage: webFinishedStates == 0,
+                child: WebView(
+                  onWebViewCreated: (controller) {
+                    webViewController = controller;
+                    loadHtml();
+                  },
+                  javascriptMode: JavascriptMode.unrestricted,
+                  onPageFinished: (String url) {
+                    webFinishedStates = 1;
+                    setState(() {});
+                  },
+                  javascriptChannels: <JavascriptChannel>[
+                    _toasterJavascriptChannel(context),
+                  ].toSet(),
+                ),
               ),
-            ) ,)
-
+            )
           ],
         ),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
+
   Future<String> getFileData(String path) async {
     return await rootBundle.loadString(path);
   }
@@ -97,6 +100,7 @@ class _MyHomePageState extends State<MyHomePage> {
     await webViewController.loadData(data);
     print("loadHtml finished");
   }
+
   JavascriptChannel _toasterJavascriptChannel(BuildContext context) {
     return JavascriptChannel(
         name: 'print',
@@ -104,5 +108,9 @@ class _MyHomePageState extends State<MyHomePage> {
           print("通信=${message.message}");
         });
   }
+
   void start() {}
+  void test(){
+    VideoPlayerController controller;
+  }
 }
