@@ -62,5 +62,6 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.alibaba:fastjson:1.1.71.android'
     implementation 'com.eclipsesource.j2v8:j2v8:6.1.0@aar'
+    implementation project(':framework')
 }
 

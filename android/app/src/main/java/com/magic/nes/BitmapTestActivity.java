@@ -1,6 +1,7 @@
 package com.magic.nes;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -34,6 +35,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import nostalgia.framework.base.OpenGLTestActivity;
+
 /**
  * Created by LiMeng on 2021/1/11.
  */
@@ -41,6 +44,7 @@ import java.util.Map;
 public class BitmapTestActivity extends Activity implements View.OnClickListener {
     ImageView imageView;
     Button button;
+    Button button1;
     private GLSurfaceView mGLView;
     SurfaceView surfaceView;
 
@@ -54,10 +58,13 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
     }
 
     private void initView() {
-        imageView = findViewById(R.id.action_image);
         button = findViewById(R.id.test_button);
+        button1 = findViewById(R.id.test_button_1);
         button.setOnClickListener(this);
-        surfaceView = findViewById(R.id.surface_view);
+        button1.setOnClickListener(this);
+
+//        imageView = findViewById(R.id.action_image);
+//        surfaceView = findViewById(R.id.surface_view);
     }
 
 
@@ -67,6 +74,10 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
             case R.id.test_button:
                 testGame();
                 intEGLUtil();
+                break;
+            case R.id.test_button_1:
+                Intent intent = new Intent(this, OpenGLTestActivity.class);
+                startActivity(intent);
                 break;
         }
     }
@@ -202,6 +213,7 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
 
     int renderCount;
     Bitmap testBitmap;
+
     private void renderFrame(int[] arr) {
         for (int i = 0; i < arr.length; i++) {
             ///模拟器返回的像素颜色为 AGBR，需要调换成 ARGB
@@ -214,7 +226,7 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
         imageView.setImageBitmap(bitmap);
         renderCount++;
         if (renderCount == 10) {
-            testBitmap=bitmap;
+            testBitmap = bitmap;
             new Handler(getMainLooper()).postDelayed(new Runnable() {
                 @Override
                 public void run() {
