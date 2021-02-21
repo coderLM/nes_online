@@ -26,6 +26,8 @@ import com.eclipsesource.v8.V8Array;
 import com.eclipsesource.v8.V8Object;
 import com.eclipsesource.v8.V8TypedArray;
 import com.eclipsesource.v8.debug.mirror.Frame;
+import com.magic.nes.gl.FormatUtil;
+import com.magic.nes.gl.MyGlSurfaceView;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -46,7 +48,8 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
     Button button;
     Button button1;
     private GLSurfaceView mGLView;
-    SurfaceView surfaceView;
+    //    SurfaceView surfaceView;
+    MyGlSurfaceView mGlSurfaceView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -63,8 +66,9 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
         button.setOnClickListener(this);
         button1.setOnClickListener(this);
 
-//        imageView = findViewById(R.id.action_image);
+        imageView = findViewById(R.id.action_image);
 //        surfaceView = findViewById(R.id.surface_view);
+        mGlSurfaceView = findViewById(R.id.gl_surfaceview);
     }
 
 
@@ -73,7 +77,7 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
         switch (v.getId()) {
             case R.id.test_button:
                 testGame();
-                intEGLUtil();
+//                intEGLUtil();
                 break;
             case R.id.test_button_1:
                 Intent intent = new Intent(this, OpenGLTestActivity.class);
@@ -86,7 +90,7 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
 
     private void intEGLUtil() {
         frameUtil = new FrameUtil();
-        frameUtil.initEGL(surfaceView.getHolder());
+//        frameUtil.initEGL(surfaceView.getHolder());
         frameUtil.initShader();
     }
 
@@ -120,7 +124,7 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
         });
         byte[] result = FileUtils.getFileDataByReader(
                 getApplicationContext(),
-                "data/fly.nes");
+                "data/tank.nes");
         jsExecutor.callMethodWithBytes("nes_start", result);
     }
 
@@ -162,7 +166,7 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
                 }
             }
         }).start();
-        new Handler().postDelayed(() -> stoped = true, 1000 * 30);
+        new Handler().postDelayed(() -> stoped = true, 1000 * 100);
     }
 
     boolean firstPlay = true;
@@ -215,25 +219,40 @@ public class BitmapTestActivity extends Activity implements View.OnClickListener
     Bitmap testBitmap;
 
     private void renderFrame(int[] arr) {
-        for (int i = 0; i < arr.length; i++) {
-            ///模拟器返回的像素颜色为 AGBR，需要调换成 ARGB
-            int value = arr[i];
-            int R = (value & 0x0000ff) << 16;
-            int B = (value & 0xff0000) >> 16;
-            arr[i] = 0xff000000 | R | (value & 0x00ff00) | B;
-        }
-        Bitmap bitmap = Bitmap.createBitmap(arr, 256, 240, Bitmap.Config.ARGB_8888);
-        imageView.setImageBitmap(bitmap);
+//        for (int i = 0; i < arr.length; i++) {
+//            ///模拟器返回的像素颜色为 AGBR，需要调换成 ARGB
+//            int value = arr[i];
+//            int R = (value & 0x0000ff) << 16;
+//            int B = (value & 0xff0000) >> 16;
+//            arr[i] = 0xff000000 | R | (value & 0x00ff00) | B;
+//        }
+//        Bitmap bitmap = Bitmap.createBitmap(arr, 256, 240, Bitmap.Config.ARGB_8888);
+//        imageView.setImageBitmap(bitmap);
         renderCount++;
-        if (renderCount == 10) {
-            testBitmap = bitmap;
-            new Handler(getMainLooper()).postDelayed(new Runnable() {
+        if (true) {
+            System.out.println("frame 100");
+//            testBitmap = bitmap;
+            new Handler(getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    frameUtil.render(testBitmap, 256, 240);
+//                    frameUtil.render(testBitmap, 256, 240);
 //                    GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, testBitmap, 0);
+                    int len = arr.length;
+                    byte[] array = FormatUtil.rgb2YCbCr420(arr, 256, 240);
+                    byte[] y = new byte[len];
+                    byte[] u = new byte[len / 4];
+                    byte[] v = new byte[len / 4];
+                    System.arraycopy(array, 0, y, 0, len);
+                    int index = 0;
+                    for (int i = 0; i < len / 4; i++) {
+                        u[i] = array[len + index];
+                        v[i] = array[len + index + 1];
+                        index+=2;
+                    }
+                    mGlSurfaceView.setFrameData(256, 240, y, u, v);
+//                     FormatUtil.rgb2YCbCr420(arr, 256, 240);
                 }
-            }, 1000);
+            });
 
         }
     }

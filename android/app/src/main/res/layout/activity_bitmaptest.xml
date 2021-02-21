@@ -9,20 +9,24 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="test_button" />
+
     <Button
         android:id="@+id/test_button_1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="test_button_1" />
 
-<!--    <ImageView-->
-<!--        android:id="@+id/action_image"-->
-<!--        android:layout_width="256dp"-->
-<!--        android:layout_height="240dp" />-->
+    <ImageView
+        android:id="@+id/action_image"
+        android:layout_width="256dp"
+        android:layout_height="240dp" />
 
-<!--    <SurfaceView-->
-<!--        android:id="@+id/surface_view"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="300dp" />-->
-
+    <!--    <SurfaceView-->
+    <!--        android:id="@+id/surface_view"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="300dp" />-->
+    <com.magic.nes.gl.MyGlSurfaceView
+        android:id="@+id/gl_surfaceview"
+        android:layout_width="match_parent"
+        android:layout_height="300dp" />
 </LinearLayout>
