@@ -6,8 +6,7 @@ import android.os.Handler;
 
 import androidx.annotation.Nullable;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import com.magic.nes.demo.SurfaceDemoActivity;
 
 import io.flutter.embedding.android.FlutterActivity;
 
@@ -29,7 +28,8 @@ public class MainActivity extends FlutterActivity {
        
     }
     private  void openTestPage(){
-        Intent intent = new Intent(this, BitmapTestActivity.class);
+//        Intent intent = new Intent(this, BitmapTestActivity.class);
+        Intent intent = new Intent(this, SurfaceDemoActivity.class);
         startActivity(intent);
     }
 }
